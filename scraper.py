@@ -1,94 +1,63 @@
-# scraper.py (Final Version - Using Local Manual Driver)
+# scraper.py (The Definitive, API-Based Solution - With Correct Query)
 
-import time
+import requests
 import pandas as pd
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.edge.service import Service
-from selenium.webdriver.edge.options import Options
-# We no longer need webdriver_manager
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from urllib.parse import urljoin
+import os
+from dotenv import load_dotenv
 
-def scrape_reuters_with_local_driver():
+def get_news_from_api_final():
     """
-    Scrapes Reuters using MS Edge and a manually downloaded driver to bypass
-    all firewall and network issues.
+    Fetches news articles related to Kenyan real estate using the GNews API
+    with a query that is compatible with the free plan.
     """
-    query = "kenya+real+estate"
-    URL = f"https://www.reuters.com/site-search/?query={query}"
+    print("--- Using The Professional Method: GNews API ---")
     
-    print("--- Using Final Method: Local Manual Driver ---")
-    print(f"Accessing: {URL}")
+    load_dotenv()
+    api_key = os.getenv("GNEWS_API_KEY")
 
-    edge_options = Options()
-    edge_options.add_argument("--window-size=1920,1080")
-    edge_options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    
+    if not api_key:
+        print("CRITICAL FAILURE: GNews API key not found in .env file.")
+        return
+
     # --- THIS IS THE FINAL FIX ---
-    # We tell Selenium the exact path to the driver you downloaded.
-    # Since it's in the same folder as the script, we just use its name.
-    service = Service(executable_path="msedgedriver.exe")
+    # We use a simpler query without the "AND" operator, which is a paid feature.
+    # This search will find articles that contain both "kenya" and "real estate".
+    query = "kenya real estate"
     # --- END OF FIX ---
     
-    driver = webdriver.Edge(service=service, options=edge_options)
+    URL = f"https://gnews.io/api/v4/search?q={query}&lang=en&token={api_key}"
+    
+    print(f"Fetching data from GNews API with a valid query...")
 
-    html_content = ""
     try:
-        driver.get(URL)
-        print("MS Edge browser is open. Looking for the cookie consent button...")
-
-        try:
-            wait = WebDriverWait(driver, 15)
-            cookie_button = wait.until(EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler")))
-            cookie_button.click()
-            print("Cookie consent button clicked successfully.")
-        except Exception:
-            print("Cookie button not found or needed. Continuing...")
-
-        time.sleep(3)
-        html_content = driver.page_source
-        print("Page content captured.")
-    finally:
-        driver.quit()
-        print("Browser closed.")
-
-    if not html_content:
-        print("Failed to get HTML content.")
+        response = requests.get(URL)
+        response.raise_for_status()
+        data = response.json()
+        
+    except requests.RequestException as e:
+        print(f"Failed to fetch data from the API. Error: {e}")
+        # GNews often sends error details inside the JSON response
+        print(f"API Response: {response.text}")
         return
 
-    soup = BeautifulSoup(html_content, 'html.parser')
-    articles = []
-    
-    results_container = soup.find('div', {'data-testid': 'search-results'})
-    
-    if not results_container:
-        print("\nCRITICAL FAILURE: The page loaded but the content was not found.")
+    if 'articles' not in data or not data['articles']:
+        print("API did not return any articles for the query. This may be due to a lack of recent news on the topic.")
         return
 
-    for item in results_container.find_all('li'):
-        title_element = item.find('a', {'data-testid': 'Heading'})
-        summary_element = item.find('p', {'data-testid': 'Body'})
+    articles_list = []
+    for item in data['articles']:
+        articles_list.append({
+            'title': item.get('title', 'No Title'),
+            'link': item.get('url', 'No Link'),
+            'summary': item.get('description', 'No Summary') 
+        })
 
-        if title_element and summary_element:
-            relative_link = title_element['href']
-            full_link = urljoin("https://www.reuters.com", relative_link)
-            title = title_element.get_text(strip=True)
-            summary = summary_element.get_text(strip=True)
-            articles.append({'title': title, 'link': full_link, 'summary': summary})
-
-    if not articles:
-        print("Scraping failed. Found results container, but it was empty.")
-        return
-
-    df = pd.DataFrame(articles)
+    df = pd.DataFrame(articles_list)
     df.to_csv('scraped_articles.csv', index=False, encoding='utf-8')
 
     print(f"\n--- SUCCESS! ---")
-    print(f"You have successfully scraped {len(articles)} articles.")
-    print("All roadblocks are cleared. You can now complete your project.")
+    print(f"Successfully fetched {len(articles_list)} articles using the GNews API.")
+    print("Full automation is achieved. Your project is complete.")
 
 if __name__ == "__main__":
-    scrape_reuters_with_local_driver()
+    get_news_from_api_final()

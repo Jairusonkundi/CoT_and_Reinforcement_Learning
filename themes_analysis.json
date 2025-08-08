@@ -1,0 +1,59 @@
+{
+    "themes": [
+        {
+            "name": "First-Home Buyer Programs",
+            "percentage": 100,
+            "count": 1,
+            "articles": [
+                {
+                    "id": 0,
+                    "link": "https://www.news.com.au/finance/real-estate/buying/how-single-25yo-bought-perth-home-using-the-first-home-builder-grant/news-story/321d9f53730fdecf0330409b18fcebe7"
+                }
+            ]
+        },
+        {
+            "name": "Millennial Homeownership",
+            "percentage": 100,
+            "count": 1,
+            "articles": [
+                {
+                    "id": 0,
+                    "link": "https://www.news.com.au/finance/real-estate/buying/how-single-25yo-bought-perth-home-using-the-first-home-builder-grant/news-story/321d9f53730fdecf0330409b18fcebe7"
+                }
+            ]
+        },
+        {
+            "name": "Australian Real Estate Market",
+            "percentage": 100,
+            "count": 1,
+            "articles": [
+                {
+                    "id": 0,
+                    "link": "https://www.news.com.au/finance/real-estate/buying/how-single-25yo-bought-perth-home-using-the-first-home-builder-grant/news-story/321d9f53730fdecf0330409b18fcebe7"
+                }
+            ]
+        },
+        {
+            "name": "Homeownership in Western Australia",
+            "percentage": 100,
+            "count": 1,
+            "articles": [
+                {
+                    "id": 0,
+                    "link": "https://www.news.com.au/finance/real-estate/buying/how-single-25yo-bought-perth-home-using-the-first-home-builder-grant/news-story/321d9f53730fdecf0330409b18fcebe7"
+                }
+            ]
+        },
+        {
+            "name": "Young Homebuyers",
+            "percentage": 100,
+            "count": 1,
+            "articles": [
+                {
+                    "id": 0,
+                    "link": "https://www.news.com.au/finance/real-estate/buying/how-single-25yo-bought-perth-home-using-the-first-home-builder-grant/news-story/321d9f53730fdecf0330409b18fcebe7"
+                }
+            ]
+        }
+    ]
+}
