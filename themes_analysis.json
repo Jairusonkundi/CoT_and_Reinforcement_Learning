@@ -1,0 +1,103 @@
+{
+    "theme_analysis": [
+        {
+            "theme_name": "Real Estate Investment Strategies",
+            "sub_themes": [
+                "Residential vs. Commercial Property",
+                "Optimizing Investment Returns",
+                "Affordable Housing Investments"
+            ],
+            "percentage_usage": 30,
+            "articles": [
+                {
+                    "id": 2,
+                    "link": "https://www.businessdailyafrica.com/bd/lifestyle/personal-finance/property-or-equity-where-to-invest-to-earn-best-returns-5126302"
+                },
+                {
+                    "id": 9,
+                    "link": "https://www.businessdailyafrica.com/bd/lifestyle/personal-finance/should-young-kenyans-raid-their-pension-to-buy-houses-5134880"
+                },
+                {
+                    "id": 5,
+                    "link": "https://www.businessdailyafrica.com/bd/markets/real-estate/eib-invests-sh3-2bn-to-boost-affordable-housing-projects-5150322"
+                }
+            ]
+        },
+        {
+            "theme_name": "Market Trends and Price Analysis",
+            "sub_themes": [
+                "Land Price Growth in Urban Areas",
+                "Luxury Property Market Dynamics",
+                "Impact of Government Policies"
+            ],
+            "percentage_usage": 20,
+            "articles": [
+                {
+                    "id": 4,
+                    "link": "https://www.businessdailyafrica.com/bd/markets/real-estate/land-price-growth-in-city-estates-overtakes-satellite-towns-5130816"
+                },
+                {
+                    "id": 3,
+                    "link": "https://www.businessdailyafrica.com/bd/markets/real-estate/tycoons-scramble-for-posh-homes-in-auctioneers-yards-5130772"
+                },
+                {
+                    "id": 7,
+                    "link": "https://www.businessdailyafrica.com/bd/opinion-analysis/columnists/halving-deposit-to-buy-houses-to-5pc-will-boost-home-ownership-5153672"
+                }
+            ]
+        },
+        {
+            "theme_name": "Regulation and Illicit Activities",
+            "sub_themes": [
+                "Combating Money Laundering in Real Estate",
+                "Government Oversight and Regulations",
+                "Financial Transparency in Property Transactions"
+            ],
+            "percentage_usage": 20,
+            "articles": [
+                {
+                    "id": 1,
+                    "link": "https://www.businessdailyafrica.com/bd/economy/state-seeks-home-buyers-identity-in-illicit-cash-fight-5119728"
+                },
+                {
+                    "id": 6,
+                    "link": "https://www.businessdailyafrica.com/bd/markets/real-estate/cra-on-the-spot-for-sh21-million-unutilised-rent-5138774"
+                }
+            ]
+        },
+        {
+            "theme_name": "Housing Market and Affordability",
+            "sub_themes": [
+                "Affordable Housing Initiatives",
+                "Home Ownership Challenges",
+                "Impact of Reduced Deposit Requirements"
+            ],
+            "percentage_usage": 20,
+            "articles": [
+                {
+                    "id": 5,
+                    "link": "https://www.businessdailyafrica.com/bd/markets/real-estate/eib-invests-sh3-2bn-to-boost-affordable-housing-projects-5150322"
+                },
+                {
+                    "id": 7,
+                    "link": "https://www.businessdailyafrica.com/bd/opinion-analysis/columnists/halving-deposit-to-buy-houses-to-5pc-will-boost-home-ownership-5153672"
+                }
+            ]
+        },
+        {
+            "theme_name": "Real Estate Market Overview",
+            "sub_themes": [
+                "Key Market Drivers",
+                "Location-Specific Trends",
+                "Wealth Creation and Property Investment"
+            ],
+            "percentage_usage": 10,
+            "articles": [
+                {
+                    "id": 0,
+                    "link": "https://www.businessdailyafrica.com/bd/opinion-analysis/columnists/key-real-estate-drivers-in-kenya-and-where-to-focus-5135800"
+                }
+            ]
+        }
+    ]
+}

@@ -1,19 +1,18 @@
-# image_agent.py (Fully Automated Version)
+# image_agent.py (Corrected Save Path)
 
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 from serpapi import SerpApiClient
-import requests # We need this to download the image
+import requests
 
 def find_and_add_real_image():
     """
-    Reads the blog post, uses Gemini to create a search query, uses SerpApi
-    to find a real image on Google Images, downloads it, and adds it to the blog.
+    Finds a real image, downloads it to the correct 'images' folder,
+    and adds the correct path to the blog post.
     """
     print("\n--- Starting Step 4: Fully Automated Image Agent ---")
     
-    # Load both API keys from the .env file
     load_dotenv()
     gemini_api_key = os.getenv("GEMINI_API_KEY")
     serpapi_api_key = os.getenv("SERPAPI_API_KEY")
@@ -22,7 +21,6 @@ def find_and_add_real_image():
         print("CRITICAL FAILURE: Gemini or SerpApi API key not found in .env file.")
         return
         
-    # Configure the Gemini AI model
     genai.configure(api_key=gemini_api_key)
     model = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -36,12 +34,10 @@ def find_and_add_real_image():
     # --- Part A: AI Brain - Generate a Search Query ---
     prompt = f"""
     Based on the following real estate blog post, generate a short, effective search query (3-5 words) for Google Images to find a relevant, high-quality, real photograph. The query should be specific to the content.
-
     BLOG POST CONTENT:
     ---
     {blog_content}
     ---
-
     SEARCH QUERY:
     """
     print("Asking AI to generate an effective image search query...")
@@ -60,14 +56,13 @@ def find_and_add_real_image():
         params = {
             "q": image_search_query,
             "engine": "google_images",
-            "ijn": "0", # Image search page number
-            "gl": "ke", # Geolocation: Kenya
+            "ijn": "0",
+            "gl": "ke",
             "api_key": serpapi_api_key
         }
         client = SerpApiClient(params)
         results = client.get_dict()
         
-        # Get the URL of the first image result
         if 'images_results' in results and len(results['images_results']) > 0:
             first_image = results['images_results'][0]
             image_url = first_image.get('original')
@@ -90,20 +85,26 @@ def find_and_add_real_image():
         image_response = requests.get(image_url, stream=True, timeout=30)
         image_response.raise_for_status()
         
-        # Save the downloaded image
-        with open('blog_image.jpg', 'wb') as f:
+        # --- FIX #1: Create the 'images' directory if it doesn't exist ---
+        os.makedirs("images", exist_ok=True)
+        
+        # --- FIX #2: Define the correct save path *inside* the 'images' folder ---
+        image_save_path = os.path.join("images", "blog_image.jpg")
+        
+        # Save the downloaded image to the correct path
+        with open(image_save_path, 'wb') as f:
             for chunk in image_response.iter_content(1024):
                 f.write(chunk)
-        print("Image downloaded and saved as 'blog_image.jpg'.")
+        print(f"Image downloaded and saved to '{image_save_path}'.")
         
     except requests.RequestException as e:
         print(f"Failed to download the image. Error: {e}")
         return
 
-    # Finally, add the image markdown to the top of the blog post file
-    image_markdown = f"![Blog Cover Image](blog_image.jpg)\n\n"
-    final_blog_content = image_markdown + blog_content
-
+    # The HTML code is already correct, pointing to the 'images' folder.
+    image_html = f'<img src="images/blog_image.jpg" alt="Blog Cover Image" style="width: 100%;">\n\n'
+    final_blog_content = image_html + blog_content
+    
     with open('blog_draft.md', 'w', encoding='utf-8') as f:
         f.write(final_blog_content)
 
