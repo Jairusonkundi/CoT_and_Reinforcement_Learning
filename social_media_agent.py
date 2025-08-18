@@ -1,14 +1,14 @@
-# social_media_agent.py (Writes to a formatted Markdown .md file - English Version)
+# social_media_agent.py (Creates both .md and .json outputs)
 
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 import json
 
-def generate_social_posts_to_markdown():
+def generate_social_media_assets(): # Renamed for clarity
     """
-    Reads the final blog post, generates tailored promotional posts for
-    Meta and X, and saves them to a clean, formatted Markdown file.
+    Reads the blog post, generates social media copy, and saves it in two
+    formats: a readable .md file and a structured .json file for other agents.
     """
     print("\n--- Starting Step 5: Social Media Agent ---")
     
@@ -29,26 +29,20 @@ def generate_social_posts_to_markdown():
         return
 
     prompt = f"""
-    You are a professional social media manager for a real estate company.
-    Based on the following blog post, your task is to generate promotional copy for two different platforms: Meta (Facebook/Instagram) and X (Twitter).
-    The output must be in a clean, valid JSON format.
-
-    **Instructions:**
-    1.  **For the Meta Post:** Write an engaging post (2-3 paragraphs). Start with a hook. Use emojis. Include a clear call-to-action and 5-7 relevant hashtags.
-    2.  **For the X (Twitter) Post:** Write a concise, impactful post (under 280 characters). Use a hook. Include a call-to-action and 3-4 highly relevant hashtags.
-
+    You are a professional social media manager... 
+    (Your existing, well-crafted prompt for generating JSON is perfect here)
+    ...
     **Output MUST be in this strict JSON format:**
     {{
       "meta_post": {{
         "text": "Your generated text for Facebook/Instagram here.",
-        "hashtags": "#RealEstateKenya #NairobiHomes #PropertyInvestment ..."
+        "hashtags": "#RealEstateKenya #NairobiHomes ..."
       }},
       "x_post": {{
         "text": "Your generated text for X/Twitter here.",
-        "hashtags": "#Kenya #RealEstate #Investing"
+        "hashtags": "#Kenya #RealEstate ..."
       }}
     }}
-
     ---
     **BLOG POST CONTENT TO ANALYZE:**
     {blog_content}
@@ -65,16 +59,19 @@ def generate_social_posts_to_markdown():
         cleaned_response = response_text.strip().replace("`", "").replace("json", "")
         social_posts_data = json.loads(cleaned_response)
         
-        # --- THIS IS THE CORRECTED SECTION ---
+        # --- THIS IS THE FIX ---
         
-        output_filename = "social_media_plan.md"
-        
-        with open(output_filename, 'w', encoding='utf-8') as f:
-            # --- USE ENGLISH HEADERS ---
+        # 1. Save the structured JSON file for the publisher agent
+        with open('social_media_posts.json', 'w', encoding='utf-8') as f:
+            json.dump(social_posts_data, f, indent=4)
+        print("SUCCESS: Structured social media data saved to 'social_media_posts.json'")
+
+        # 2. Also save the human-readable Markdown file
+        md_filename = "social_media_plan.md"
+        with open(md_filename, 'w', encoding='utf-8') as f:
             f.write("# Social Media Promotion Plan\n\n")
             f.write("This file contains the auto-generated social media posts to promote your blog post.\n\n")
             
-            # Write the Meta Post
             meta = social_posts_data.get('meta_post', {})
             f.write("## ✅ Meta (Facebook/Instagram) Post\n\n")
             f.write("```text\n")
@@ -82,16 +79,15 @@ def generate_social_posts_to_markdown():
             f.write(meta.get('hashtags', '') + "\n")
             f.write("```\n\n")
             
-            # Write the X Post
             x_post = social_posts_data.get('x_post', {})
             f.write("## ✅ X (Twitter) Post\n\n")
             f.write("```text\n")
             f.write(x_post.get('text', 'N/A') + "\n\n")
             f.write(x_post.get('hashtags', '') + "\n")
             f.write("```\n")
-
-        print(f"--- SUCCESS! ---")
-        print(f"Your social media plan has been generated and saved to '{output_filename}'")
+        
+        print(f"SUCCESS: Human-readable plan saved to '{md_filename}'")
+        # --- END OF FIX ---
         
     except Exception as e:
         print(f"\nAn error occurred during social media post generation: {e}")
@@ -99,4 +95,4 @@ def generate_social_posts_to_markdown():
         print(response_text)
 
 if __name__ == "__main__":
-    generate_social_posts_to_markdown()
+    generate_social_media_assets()

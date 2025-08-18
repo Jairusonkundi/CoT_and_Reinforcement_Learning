@@ -1,4 +1,5 @@
-# generator.py (Upgraded to use Themes and Sub-Themes)
+# generator.py (Updated to return its output)
+
 import google.generativeai as genai
 import os
 import json
@@ -6,8 +7,8 @@ from dotenv import load_dotenv
 
 def generate_detailed_blog_post():
     """
-    Loads the detailed theme and sub-theme analysis and generates a comprehensive
-    blog post using this richer data.
+    Loads the detailed theme and sub-theme analysis, generates a comprehensive
+    blog post, saves it, and returns the generated text for the next agent.
     """
     print("\n--- Starting Step 3: AI Blog Post Generation ---")
 
@@ -15,7 +16,7 @@ def generate_detailed_blog_post():
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         print("CRITICAL FAILURE: Gemini API key not found in .env file.")
-        return
+        return None
         
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-1.5-flash')
@@ -25,38 +26,28 @@ def generate_detailed_blog_post():
             analysis_data = json.load(f)
     except FileNotFoundError:
         print("CRITICAL FAILURE: themes_analysis.json not found. Please run analysis.py first.")
-        return
+        return None
 
-    # --- THIS IS THE UPDATE: We check for the 'theme_analysis' key ---
     if 'theme_analysis' not in analysis_data or not isinstance(analysis_data['theme_analysis'], list):
         print("CRITICAL FAILURE: The JSON from analysis.py does not contain a 'theme_analysis' list.")
-        print("Please ensure your analysis.py script is creating the correct JSON structure.")
-        return
-    # --- END OF UPDATE ---
+        return None
 
     list_of_themes = analysis_data['theme_analysis']
     
-    # --- PROMPT DATA PREPARATION: We now format both themes and sub-themes ---
     themes_for_prompt = ""
     for theme in list_of_themes:
-        # Check if the dictionary has the keys we expect
         if all(k in theme for k in ['theme_name', 'percentage_usage', 'sub_themes']):
-            # Main theme line
             themes_for_prompt += f"- **Theme:** {theme['theme_name']} ({theme['percentage_usage']}% of news coverage)\n"
-            
-            # Sub-themes list
             if theme['sub_themes']:
                 themes_for_prompt += "  - **Key Sub-Themes:**\n"
                 for sub_theme in theme['sub_themes']:
                     themes_for_prompt += f"    - {sub_theme}\n"
-        themes_for_prompt += "\n" # Add a space between themes for clarity
-    # --- END OF PROMPT DATA PREPARATION ---
+        themes_for_prompt += "\n"
 
     if not themes_for_prompt:
         print("Could not extract any valid themes from themes_analysis.json. Cannot generate blog post.")
-        return
+        return None
 
-    # --- FINAL PROMPT: Now instructs the AI to use the sub-themes ---
     prompt = f"""
     Act as an expert real estate analyst and blogger. Your target audience is potential property buyers and investors in Kenya.
     Write a captivating and highly detailed blog post titled: **"Deep Dive: The Top 5 Trends Shaping Kenya's Real Estate Market."**
@@ -71,22 +62,26 @@ def generate_detailed_blog_post():
     **Data-Driven Themes and Sub-Themes to Use:**
     {themes_for_prompt}
     """
-    # --- END OF FINAL PROMPT ---
 
     print("Sending detailed themes to Gemini AI to generate the final blog post...")
     
     try:
         response = model.generate_content(prompt)
+        blog_text = response.text # Get the text from the AI
         
+        # Save the initial text-only version of the blog
         with open('blog_draft.md', 'w', encoding='utf-8') as f:
-            f.write(response.text)
+            f.write(blog_text)
 
         print("--- SUCCESS! ---")
         print("Your detailed blog post has been generated and saved to blog_draft.md")
+        # --- THIS IS THE KEY CHANGE ---
+        return blog_text
       
-
     except Exception as e:
         print(f"An error occurred during blog post generation: {e}")
+        # --- AND RETURN NOTHING ON FAILURE ---
+        return None
 
 if __name__ == "__main__":
     generate_detailed_blog_post()

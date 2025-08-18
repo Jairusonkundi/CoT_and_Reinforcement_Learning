@@ -1,4 +1,5 @@
-# analysis.py (Enhanced to include Sub-Themes)
+# analysis.py (Enhanced with Caching Logic to Save API Quota)
+
 import google.generativeai as genai
 import pandas as pd
 import os
@@ -6,6 +7,15 @@ from dotenv import load_dotenv
 import json
 
 def analyze_themes_with_subthemes():
+    # --- THIS IS THE NEW CACHING LOGIC ---
+    # Before doing anything, check if the output file already exists.
+    if os.path.exists('themes_analysis.json'):
+        print("\n--- SKIPPING Step 2: AI Theme & Sub-Theme Analysis ---")
+        print("Reason: 'themes_analysis.json' already exists. Using cached data to save API quota.")
+        # If the file exists, we stop the function here to avoid making a new API call.
+        return 
+    # --- END OF CACHING LOGIC ---
+
     print("\n--- Starting Step 2: AI Theme & Sub-Theme Analysis ---")
     
     load_dotenv()

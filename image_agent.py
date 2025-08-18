@@ -1,4 +1,4 @@
-# image_agent.py (Corrected Save Path)
+# image_agent.py (Updated to accept content as an argument)
 
 import google.generativeai as genai
 import os
@@ -6,13 +6,19 @@ from dotenv import load_dotenv
 from serpapi import SerpApiClient
 import requests
 
-def find_and_add_real_image():
+# --- THE FUNCTION DEFINITION HAS CHANGED ---
+def find_and_add_real_image(blog_content):
     """
-    Finds a real image, downloads it to the correct 'images' folder,
-    and adds the correct path to the blog post.
+    Takes blog content as an input, finds a real image, downloads it,
+    and rewrites the final blog_draft.md with the image prepended.
     """
     print("\n--- Starting Step 4: Fully Automated Image Agent ---")
     
+    # --- THIS CHECK IS NOW AT THE START ---
+    if not blog_content:
+        print("CRITICAL FAILURE: No blog content was provided to the Image Agent.")
+        return
+
     load_dotenv()
     gemini_api_key = os.getenv("GEMINI_API_KEY")
     serpapi_api_key = os.getenv("SERPAPI_API_KEY")
@@ -24,12 +30,7 @@ def find_and_add_real_image():
     genai.configure(api_key=gemini_api_key)
     model = genai.GenerativeModel('gemini-1.5-flash')
 
-    try:
-        with open('blog_draft.md', 'r', encoding='utf-8') as f:
-            blog_content = f.read()
-    except FileNotFoundError:
-        print("CRITICAL FAILURE: blog_draft.md not found. Please run generator.py first.")
-        return
+    # --- WE NO LONGER READ THE FILE HERE ---
 
     # --- Part A: AI Brain - Generate a Search Query ---
     prompt = f"""
@@ -54,11 +55,8 @@ def find_and_add_real_image():
     print(f"Executing image search on Google...")
     try:
         params = {
-            "q": image_search_query,
-            "engine": "google_images",
-            "ijn": "0",
-            "gl": "ke",
-            "api_key": serpapi_api_key
+            "q": image_search_query, "engine": "google_images", "ijn": "0",
+            "gl": "ke", "api_key": serpapi_api_key
         }
         client = SerpApiClient(params)
         results = client.get_dict()
@@ -85,13 +83,9 @@ def find_and_add_real_image():
         image_response = requests.get(image_url, stream=True, timeout=30)
         image_response.raise_for_status()
         
-        # --- FIX #1: Create the 'images' directory if it doesn't exist ---
         os.makedirs("images", exist_ok=True)
-        
-        # --- FIX #2: Define the correct save path *inside* the 'images' folder ---
         image_save_path = os.path.join("images", "blog_image.jpg")
         
-        # Save the downloaded image to the correct path
         with open(image_save_path, 'wb') as f:
             for chunk in image_response.iter_content(1024):
                 f.write(chunk)
@@ -101,7 +95,7 @@ def find_and_add_real_image():
         print(f"Failed to download the image. Error: {e}")
         return
 
-    # The HTML code is already correct, pointing to the 'images' folder.
+    # --- Prepend the image to the content and rewrite the final file ---
     image_html = f'<img src="images/blog_image.jpg" alt="Blog Cover Image" style="width: 100%;">\n\n'
     final_blog_content = image_html + blog_content
     
@@ -110,7 +104,13 @@ def find_and_add_real_image():
 
     print("\n--- SUCCESS! ---")
     print("A relevant image was found, downloaded, and added to your blog post.")
-    print("The project is now fully and completely automated.")
 
 if __name__ == "__main__":
-    find_and_add_real_image()
+    # This part is now mainly for testing the agent in isolation.
+    # It requires a blog_draft.md to exist to run this way.
+    try:
+        with open('blog_draft.md', 'r', encoding='utf-8') as f:
+            test_content = f.read()
+        find_and_add_real_image(test_content)
+    except FileNotFoundError:
+        print("To test image_agent.py directly, a 'blog_draft.md' file must exist.")
