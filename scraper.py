@@ -1,117 +1,114 @@
 # scraper.py
-
-import os
-import random
+from serpapi import GoogleSearch
 from datetime import datetime
+import os
 from dotenv import load_dotenv
-from serpapi import SerpApiClient
 
-def get_google_news_articles(themes, start_date, end_date, site_target, num_articles):
+load_dotenv()
+SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")
+
+def _format_date(date_str):
     """
-    Performs a flexible Google News search based on provided criteria.
-
-    Args:
-        themes (list): Keywords or themes to search for.
-        start_date (str): The start date in "YYYY-MM-DD" format.
-        end_date (str): The end date in "YYYY-MM-DD" format.
-        site_target (str): The specific website to search within.
-        num_articles (int): The specific number of articles to fetch.
-
-    Returns:
-        list: A list of dictionaries representing the fetched articles.
+    Accepts YYYY-MM-DD and returns MM/DD/YYYY for SerpApi/GSearch tbs filter.
     """
-    load_dotenv()
-    api_key = os.getenv("SERPAPI_API_KEY")
-    if not api_key:
-        print("CRITICAL FAILURE: SerpApi API key not found in .env file.")
+    return datetime.strptime(date_str, "%Y-%m-%d").strftime("%m/%d/%Y")
+
+def get_google_news_articles(themes, start_date, end_date, site_target=None, per_theme_limit=20):
+    """
+    Performs Google News searches for each theme and collects articles.
+    Falls back to organic_results when needed and returns all collected articles.
+    """
+    if not SERPAPI_API_KEY:
+        print("  -> [ERROR] Scraper: SerpApi API key not found. Set SERPAPI_API_KEY in .env")
         return []
 
-    search_terms = " OR ".join([f'"{theme}"' for theme in themes])
-    search_query = f"{search_terms} site:{site_target}"
-    
-    print(f"--- Scraper: Searching for {num_articles} articles with themes: {themes} ---")
+    all_articles = []
+    start_date_formatted = _format_date(start_date)
+    end_date_formatted = _format_date(end_date)
 
-    try:
-        start_date_formatted = datetime.strptime(start_date, "%Y-%m-%d").strftime("%m/%d/%Y")
-        end_date_formatted = datetime.strptime(end_date, "%Y-%m-%d").strftime("%m/%d/%Y")
-        
+    if not themes:
+        print("  -> [INFO] Scraper: No themes provided to search.")
+        return []
+
+    for theme in themes:
+        query = f'"{theme}"' if " " in theme else theme
+        if site_target:
+            query += f" site:{site_target}"
+
+        print(f"  -> Scraper: Searching articles for theme: '{theme}' ...")
         params = {
-            "q": search_query,
-            "engine": "google",
+            "engine": "google_news",   # preferred for news_results
+            "q": query,
             "gl": "ke",
             "hl": "en",
-            "tbm": "nws",
-            "num": num_articles,
-            "api_key": api_key,
+            "api_key": SERPAPI_API_KEY,
+            "num": per_theme_limit,
             "tbs": f"cdr:1,cd_min:{start_date_formatted},cd_max:{end_date_formatted}"
         }
-        
-        client = SerpApiClient(params)
-        results = client.get_dict()
-        
-    except Exception as e:
-        print(f"Scraper: An error occurred while calling SerpApi for news. Error: {e}")
-        return []
 
-    if 'news_results' not in results or not results['news_results']:
-        print("Scraper: API did not return any news articles for the specified criteria.")
-        return []
+        try:
+            search = GoogleSearch(params)
+            results = search.get_dict()
+        except Exception as e:
+            print(f"  -> [ERROR] Scraper: API call failed for theme '{theme}'. Error: {e}")
+            continue
 
-    articles_list = [{'title': item.get('title'), 'link': item.get('link'), 'summary': item.get('snippet')}
-                     for item in results['news_results']]
+        # Prefer news_results but fallback to organic_results (search page with tbm=nws may populate organic_results)
+        articles = results.get("news_results") or results.get("organic_results") or []
+        if not articles:
+            print(f"  -> [INFO] Scraper: No results for theme '{theme}'.")
+            continue
 
-    print(f"--- Scraper: Successfully fetched {len(articles_list)} articles. ---")
-    return articles_list
+        for a in articles:
+            title = a.get("title") or a.get("headline") or ""
+            link = a.get("link") or a.get("source") or ""
+            summary = a.get("snippet") or a.get("summary") or title
+            # Only include if we have a link and a title
+            if title and link:
+                all_articles.append({"title": title.strip(), "link": link.strip(), "summary": summary.strip()})
+
+    if not all_articles:
+        print("  -> [INFO] Scraper: No news articles found for ANY theme in the given date range.")
+    else:
+        print(f"  -> [SUCCESS] Scraper: Collected {len(all_articles)} articles in total.")
+
+    return all_articles
 
 def get_relevant_image_url(theme):
     """
-    Finds a relevant, high-quality, and DIRECT image URL, avoiding problematic sources.
+    Searches for a relevant image using Google Images via SerpApi and returns the first direct image URL that passes basic filters.
     """
-    print(f"Scraper: Searching for a relevant image for theme: '{theme}'...")
-    api_key = os.getenv("SERPAPI_API_KEY")
-    if not api_key:
-        print("Scraper: SerpApi API key not found, cannot fetch image.")
+    print(f"  -> Scraper: Searching for a relevant image for theme: '{theme}'...")
+    if not SERPAPI_API_KEY:
+        print("  -> [ERROR] Scraper: SerpApi API key not found, cannot fetch image.")
         return None
 
-    # A list of sources that are difficult to embed images from directly.
     BANNED_IMAGE_SOURCES = ["tiktok.com", "pinterest.com", "facebook.com", "instagram.com"]
-
     image_query = f"professional real estate {theme} kenya"
+    params = {
+        "q": image_query,
+        "engine": "google_images",
+        "ijn": "0",
+        "api_key": SERPAPI_API_KEY,
+        "tbs": "isz:l,ic:color,itp:photo"
+    }
 
     try:
-        params = {
-            "q": image_query,
-            "engine": "google_images",
-            "ijn": "0",
-            "api_key": api_key,
-            "tbs": "isz:l,ic:color,itp:photo" # Filters: Large, Full Color, Photo
-        }
-        client = SerpApiClient(params)
-        results = client.get_dict()
-
-        if 'images_results' in results and results['images_results']:
-            # Loop through the results to find a suitable, direct link.
-            for image_data in results['images_results']:
-                source_domain = image_data.get('source', '').lower()
-                image_url = image_data.get('original', '')
-
-                # Check 1: Is the source domain in our banned list?
-                is_banned = any(banned_site in source_domain for banned_site in BANNED_IMAGE_SOURCES)
-                if is_banned:
-                    print(f"Scraper: Skipping banned source: {source_domain}")
-                    continue # Skip to the next image in the loop
-
-                # Check 2: Does the URL look like a direct link to an image file?
-                if image_url.endswith(('.jpg', '.jpeg', '.png')):
-                    print(f"Scraper: Successfully found valid image URL: {image_url}")
-                    return image_url # Found a good one, return it and exit the function
-
-            # If the loop finishes without finding a good URL from a valid source
-            print("Scraper: Could not find a direct image link after checking results.")
-            return None
-        else:
-            print("Scraper: No relevant images found.")
-            return None
+        search = GoogleSearch(params)
+        results = search.get_dict()
     except Exception as e:
-        print(f"Scraper: An error occurred during image search. Error: {e}")
+        print(f"  -> [ERROR] Scraper: Image search failed. Error: {e}")
         return None
+
+    images = results.get("images_results") or []
+    for image_data in images:
+        source_domain = (image_data.get('source') or "").lower()
+        image_url = image_data.get('original') or image_data.get('thumbnail') or ""
+        is_banned = any(b in source_domain for b in BANNED_IMAGE_SOURCES)
+        if is_banned:
+            continue
+        if image_url and image_url.lower().endswith(('.jpg', '.jpeg', '.png')):
+            return image_url
+
+    print("  -> [WARNING] Scraper: Could not find a direct suitable image link after checking results.")
+    return None

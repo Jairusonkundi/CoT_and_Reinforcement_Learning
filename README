@@ -1,0 +1,125 @@
+# Kenyan Real Estate Content Engine
+
+This project automates the generation of insightful blogs and social media posts about the Kenyan real estate market. It leverages web scraping, AI-driven analysis, and reinforcement-based feedback loops to improve content quality over time.
+
+---
+
+## Project Structure
+
+### 1. `main.py`
+- **Purpose:** Core workflow orchestrator.
+- **Responsibilities:**
+  - Loads search themes and previously processed themes.
+  - Scrapes relevant news articles (`scraper.py`).
+  - Analyzes articles to extract trending themes (`analysis.py`).
+  - Generates blog posts (`generator_agent.py`) and social posts (`social_media_agent.py`).
+  - Implements feedback loops and reinforcement to improve content (`feedback.py`, `feedback_memory.py`).
+  - Saves content as Markdown files and optionally publishes to Telegram.
+
+---
+
+### 2. `scraper.py`
+- **Purpose:** Collects relevant real estate articles and images.
+- **Key Functions:**
+  - `get_google_news_articles(themes, start_date, end_date, site_target)`: Scrapes Google News for the provided themes and date range.
+  - `get_relevant_image_url(theme)`: Finds a suitable image for the theme using Google Images.
+- **How scraping works:**
+  - Uses the **SerpApi** Google Search API.
+  - Queries Google News for specified themes, optionally restricted to a specific site.
+  - Falls back to organic results if news results are missing.
+  - Filters image results to avoid social media sources (TikTok, Pinterest, Facebook, Instagram) and selects JPEG/PNG images.
+- **API Requirements:**
+  - Requires `SERPAPI_API_KEY` in `.env`.
+  - Example `.env` entry:
+    ```
+    SERPAPI_API_KEY=<your-serpapi-key>
+    ```
+
+---
+
+### 3. `analysis.py`
+- **Purpose:** AI-based analysis of articles to extract and expand themes.
+- **Key Functions:**
+  - `find_highest_discussed_themes(articles)`: Determines top themes from scraped articles.
+  - `discover_new_search_themes(current_themes, processed_themes)`: Suggests new search queries to broaden coverage.
+- **AI Usage:**
+  - Uses **Google Gemini API** via `google-generativeai`.
+  - Requires `GEMINI_API_KEY` in `.env`.
+  - Example `.env` entry:
+    ```
+    GEMINI_API_KEY=<your-gemini-key>
+    ```
+
+---
+
+### 4. `generator_agent.py`
+- **Purpose:** Generates blog content for a given theme.
+- **Key Function:** `generate_themed_blog_post(theme, articles)`
+- Uses AI to create unique blog posts from scraped articles.
+- Incorporates improvement tips from `FeedbackMemorySingleton` for reinforcement.
+
+---
+
+### 5. `social_media_agent.py`
+- **Purpose:** Creates social media posts from blogs and optionally publishes to Telegram.
+- **Key Functions:**
+  - `generate_social_post(title, summary)`: Generates a short, engaging social post using Gemini AI.
+  - `post_to_telegram(message)`: Publishes the post to Telegram.
+- **API Requirements:**
+  - Requires `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in `.env`.
+  - Example `.env` entries:
+    ```
+    TELEGRAM_BOT_TOKEN=<your-telegram-bot-token>
+    TELEGRAM_CHAT_ID=<your-telegram-chat-id>
+    ```
+
+---
+
+### 6. `feedback.py`
+- **Purpose:** Evaluates AI-generated content and records scores.
+- **Key Functions:**
+  - `evaluate_blog_ai()` and `evaluate_social_ai()` compute reinforced scores based on past successes.
+  - `record_feedback()` logs evaluation results and updates rewards.
+- Implements reinforcement learning:
+  - Improves future content by learning from previous blog/social post performance.
+  - Ensures subsequent runs increase scores and content quality.
+
+---
+
+### 7. `feedback_memory.py`
+- **Purpose:** Stores improvement tips and success patterns.
+- **Key Class:** `FeedbackMemorySingleton`
+  - Tracks blog and social post tips separately.
+  - Provides actionable improvement tips to AI in the next run.
+
+---
+
+### 8. Log & Data Files
+- `processed_blog_themes.log`: Tracks themes already covered in blogs.
+- `reward_store.json`: Stores cumulative rewards from feedback scores.
+- `feedback_history.json`: Full history of content evaluations.
+- `feedback.log`: Text log of feedback events and scores.
+
+---
+
+## Workflow Summary
+
+1. **Theme Selection:** Load search themes, avoiding duplicates.
+2. **Article Scraping:**
+   - Uses SerpApi to query Google News for each theme.
+   - Collects articles with titles, summaries, and links.
+   - Finds relevant images from Google Images while filtering out social media sources.
+3. **Theme Analysis:** Extracts trending themes using AI.
+4. **Content Generation:** Generates blog posts and social media posts.
+5. **Feedback Loop:** Evaluates content, applies reinforcement, updates improvement tips.
+6. **Save & Publish:** Stores Markdown files and optionally sends social posts to Telegram.
+7. **Memory Update:** Improves AI guidance based on past successes/failures.
+
+---
+
+## Requirements
+
+- Python 3.10+
+- Packages:
+  ```bash
+  pip install google-generativeai serpapi aiohttp python-dotenv
